@@ -440,8 +440,10 @@ def login_clave():
         accion, datos={"username": cred["usuario"], "password": cred["clave"], "credentialId": ""}, crudo=True
     )
     if "kc-form-login" in pagina:
-        error = re.search(r'(?:input-error|kc-feedback-text|alert-error)[^>]*>\s*([^<]+)', pagina)
-        raise SystemExit("Mi Carrefour rechazó el login: " + (html.unescape(error.group(1).strip()) if error else "revisá usuario y clave."))
+        errores = re.findall(r'class="[^"]*(?:error|alert|feedback)[^"]*"[^>]*>(.*?)</', pagina, re.S)
+        textos = [html.unescape(re.sub(r"<[^>]+>", "", e)).strip() for e in errores]
+        texto = next((t for t in textos if t), "revisá usuario y clave.")
+        raise SystemExit(f"Mi Carrefour rechazó el login: {texto}")
     return verificar_sesion()
 
 
