@@ -31,7 +31,7 @@ On first run it asks for your postal code, which determines the prices and stock
 
 | Tab | Keys |
 |---|---|
-| all | `1`–`4` or `Tab` switch tabs · `↑`/`↓` (or `j`/`k`) move · `q` quits |
+| all | `1`–`5` or `Tab` switch tabs · `↑`/`↓` (or `j`/`k`) move · `q` quits |
 | **Buscar** (search) | `/` search · `a` add to list · `c` add to cart · `h` price history |
 | **Lista** (list) | `+`/`-` quantity · `d` remove · `l` switch list (or create one) · `A` build the cart from the list |
 | **Carrito** (cart) | `+`/`-` quantity · `d` remove · `o` open in the browser to pay · `r` refresh · `V` empty |
@@ -59,6 +59,10 @@ On first run it asks for your postal code, which determines the prices and stock
 
 `--sin` removes products, `--mas` adds units and `--cant` sets the quantity.
 
+The cart is built through the API, but **you always pay on Carrefour's website**: the link
+`https://www.carrefour.com.ar/checkout/?orderFormId=…` opens that same cart in your browser.
+Shipping is calculated there, with your address.
+
 ## Saving money
 
 ```sh
@@ -83,10 +87,6 @@ It only suggests alternatives that are at least 5% cheaper (`--minimo` to change
 Changuito waits at least 1.5 s between requests (`CHANGUITO_PAUSA` to change it), caches
 searches for 6 hours, and if Carrefour answers 429/403/503 it stops for 15 minutes
 instead of retrying. Checking a long list for savings takes a couple of minutes because of this.
-
-The cart is built through the API, but **you always pay on Carrefour's website**: the link
-`https://www.carrefour.com.ar/checkout/?orderFormId=…` opens that same cart in your browser.
-Shipping is calculated there, with your address.
 
 ## Logging in (optional)
 
