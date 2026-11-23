@@ -200,7 +200,7 @@ class App:
             return "Pedidos", [(msg, curses.A_DIM)], ""
         cuerpo = [
             (f"{(o.get('creationDate') or '')[:10]}  {cf.pesos(o.get('totalValue', 0) / 100):>12}"
-             f"  {o.get('statusDescription') or o.get('status')}  {o['orderId']}", normal)
+             f"  {cf.estado(o)}  {o['orderId']}", normal)
             for o in self.pedidos
         ]
         return "Pedidos", cuerpo or [("No hay pedidos.", curses.A_DIM)], ""

@@ -514,6 +514,19 @@ def requiere_sesion():
         raise SystemExit("Necesitás iniciar sesión: ./carrefour.py login clave  (o login email …)")
 
 
+# VTEX devuelve algunos estados en portugués.
+ESTADOS = {
+    "Faturado": "Facturado", "Cancelado": "Cancelado", "Pronto para o manuseio": "Listo para preparar",
+    "Preparando Entrega": "Preparando la entrega", "Aguardando autorização para despachar": "Esperando autorización",
+    "Pagamento Aprovado": "Pago aprobado", "Pagamento Pendente": "Pago pendiente", "Entregue": "Entregado",
+}
+
+
+def estado(o):
+    e = o.get("statusDescription") or o.get("status") or ""
+    return ESTADOS.get(e, e)
+
+
 def mis_pedidos(n=10):
     d = pedir(f"/api/oms/user/orders?page=1&per_page={n}")
     return d.get("list", d) if isinstance(d, dict) else d
@@ -538,7 +551,7 @@ def cmd_pedidos(a):
         return
     for o in lista:
         fecha = (o.get("creationDate") or "")[:10]
-        print(f"{o['orderId']}  {fecha}  {pesos(o.get('totalValue', 0) / 100):>12}  {o.get('statusDescription') or o.get('status')}")
+        print(f"{o['orderId']}  {fecha}  {pesos(o.get('totalValue', 0) / 100):>12}  {estado(o)}")
 
 
 def items_de_pedido(order_id):
@@ -549,7 +562,7 @@ def items_de_pedido(order_id):
 def cmd_pedido(a):
     requiere_sesion()
     d, items = items_de_pedido(a.id)
-    print(f"Pedido {a.id}  {d.get('creationDate', '')[:10]}  {d.get('statusDescription') or d.get('status')}")
+    print(f"Pedido {a.id}  {d.get('creationDate', '')[:10]}  {estado(d)}")
     for sku, n, nombre, _ in items:
         print(f"  {n:>3} × {nombre}  ({sku})")
     if a.a_lista:
