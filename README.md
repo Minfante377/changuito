@@ -84,9 +84,9 @@ It only suggests alternatives that are at least 5% cheaper (`--minimo` to change
 
 ## Going easy on the API
 
-Changuito waits at least 1.5 s between requests (`CHANGUITO_PAUSA` to change it), caches
+Changuito waits at least 0.5 s between requests (`CHANGUITO_PAUSA` to change it), caches
 searches for 6 hours, and if Carrefour answers 429/403/503 it stops for 15 minutes
-instead of retrying. Checking a long list for savings takes a couple of minutes because of this.
+instead of retrying. Checking a 50-product list for savings takes about a minute.
 
 ## Logging in (optional)
 

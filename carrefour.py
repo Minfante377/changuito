@@ -135,7 +135,7 @@ def guardar_cookies():
 
 # Ser amables con la API: pausa entre pedidos (también entre corridas),
 # caché de búsquedas y, si Carrefour limita, frenar un rato sin reintentar.
-PAUSA = float(os.environ.get("CHANGUITO_PAUSA", "1.5"))
+PAUSA = float(os.environ.get("CHANGUITO_PAUSA", "0.5"))
 CACHE_SEG = 6 * 3600
 CACHEABLE = ("/api/io/_v/api/intelligent-search/", "/api/checkout/pub/regions")
 FRENO_SEG = 15 * 60
@@ -148,7 +148,7 @@ def esperar_turno():
             "Carrefour nos pidió frenar: espero hasta las "
             + time.strftime("%H:%M", time.localtime(hasta)) + " antes de volver a consultar."
         )
-    falta = float(cfg("ultimo_pedido", 0)) + PAUSA + random.uniform(0, 0.5) - time.time()
+    falta = float(cfg("ultimo_pedido", 0)) + PAUSA + random.uniform(0, 0.3) - time.time()
     if falta > 0:
         time.sleep(falta)
     set_cfg("ultimo_pedido", time.time())
