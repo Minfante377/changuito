@@ -382,6 +382,7 @@ def order_form(nuevo=False):
     of = None if nuevo else cfg("orderform")
     d = pedir(f"/api/checkout/pub/orderForm/{of}" if of else "/api/checkout/pub/orderForm?forceNewCart=true" if nuevo else "/api/checkout/pub/orderForm")
     set_cfg("orderform", d["orderFormId"])
+    guardar_precios_vtex(d.get("items", []))
     return d
 
 
