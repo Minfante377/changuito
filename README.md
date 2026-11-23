@@ -36,6 +36,7 @@ On first run it asks for your postal code, which determines the prices and stock
 | **Lista** (list) | `+`/`-` quantity · `d` remove · `l` switch list (or create one) · `A` build the cart from the list |
 | **Carrito** (cart) | `+`/`-` quantity · `d` remove · `o` open in the browser to pay · `r` refresh · `V` empty |
 | **Pedidos** (orders) | `L` log in · `Enter` show products · `a` copy an order to a list · `Esc` back |
+| **Ahorro** (savings) | `r` find cheaper alternatives for the list · `Enter` swap it in the list · `d` dismiss |
 
 ## Commands
 
@@ -57,6 +58,31 @@ On first run it asks for your postal code, which determines the prices and stock
 ```
 
 `--sin` removes products, `--mas` adds units and `--cant` sets the quantity.
+
+## Saving money
+
+```sh
+./carrefour.py ahorrar                      # cheaper alternatives for your list
+./carrefour.py cambiar 4843 279422          # swap a product in the list (keeps the quantity)
+```
+
+For each product on the list, `ahorrar` looks for similar products in the same category
+(if the original is "light", "sin TACC", "sin azúcar"… the alternative must be too) and
+compares the price per kg, litre or unit. Prices come from a simulation of the cart, so
+they include the promos Carrefour applies for your quantity (2x1, second unit at 70%…).
+It only suggests alternatives that are at least 5% cheaper (`--minimo` to change it).
+
+```
+• 6 × Lentejas secas remojadas Inalpa lata 300 g.  $7.800 ($4.333,33/kg)
+  → 6 × Lentejas secas remojadas Bulnez en lata 300 g.  $5.514 ($3.063,33/kg)
+    ahorrás ~$2.286 (29%)   ./carrefour.py cambiar 88577 192735
+```
+
+## Going easy on the API
+
+Changuito waits at least 1.5 s between requests (`CHANGUITO_PAUSA` to change it), caches
+searches for 6 hours, and if Carrefour answers 429/403/503 it stops for 15 minutes
+instead of retrying. Checking a long list for savings takes a couple of minutes because of this.
 
 The cart is built through the API, but **you always pay on Carrefour's website**: the link
 `https://www.carrefour.com.ar/checkout/?orderFormId=…` opens that same cart in your browser.

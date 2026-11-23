@@ -10,13 +10,14 @@ import webbrowser
 
 import carrefour as cf
 
-PESTANAS = ["Buscar", "Lista", "Carrito", "Pedidos"]
+PESTANAS = ["Buscar", "Lista", "Carrito", "Pedidos", "Ahorro"]
 
 AYUDA = {
     "Buscar": "/ buscar   a agregar a la lista   c sumar al carrito   h historial de precios",
     "Lista": "+/- cantidad   d quitar   l cambiar de lista   A armar carrito con la lista",
     "Carrito": "+/- cantidad   d quitar   o abrir para pagar   r actualizar   V vaciar",
     "Pedidos": "Enter ver productos   a copiar a la lista   r actualizar   L iniciar sesión",
+    "Ahorro": "r buscar alternativas para la lista   Enter cambiar en la lista   d descartar",
 }
 
 
@@ -35,6 +36,7 @@ class App:
         self.detalle = None  # (pedido, items) abierto en Pedidos
         self.usuario = None
         self.sesion_vista = False
+        self.sugerencias = None
 
     # ------------------------------------------------------------ helpers
 
@@ -92,6 +94,8 @@ class App:
             return cf.items_lista(self.lista)
         if t == "Carrito":
             return (self.carrito or {}).get("items", [])
+        if t == "Ahorro":
+            return self.sugerencias or []
         if self.detalle:
             return self.detalle[1]
         return self.pedidos or []
@@ -162,10 +166,10 @@ class App:
             items = cf.items_lista(self.lista)
             otras = [n for n in cf.nombres_listas() if n != self.lista]
             titulo = f"Lista «{self.lista}»" + (f"   (otras: {', '.join(otras)})" if otras else "")
-            total = sum((i["precio"] or 0) * i["cantidad"] for i in items)
+            total = sum(i["subtotal"] for i in items)
             cuerpo = [
-                (f"{i['cantidad']:>3} × {i['nombre'] or i['sku']}"
-                 f"  {cf.pesos(i['precio']) + ' c/u' if i['precio'] else ''}", normal)
+                (f"{cf.cuanto(i['cantidad'], i['unidad'], i['multiplicador']):>6} {i['nombre'] or i['sku']}"
+                 f"  {i['precio_txt']}", normal)
                 for i in items
             ]
             if not items:
@@ -189,6 +193,23 @@ class App:
             partes = [f"{z['name']}: {cf.pesos(z['value'] / 100)}" for z in cf.totales(d)]
             pie = " · ".join(partes + [f"TOTAL {cf.pesos(d['value'] / 100)} + envío"])
             return "Carrito", cuerpo, pie
+
+        if t == "Ahorro":
+            if self.sugerencias is None:
+                return (f"Ahorro en «{self.lista}»",
+                        [("r para buscar productos parecidos más baratos (tarda: va despacio para no saturar a Carrefour)",
+                          curses.A_DIM)], "")
+            cuerpo = []
+            for x in self.sugerencias:
+                promo = f" [{'; '.join(x['alt_promos'])}]" if x["alt_promos"] else ""
+                cuerpo.append((
+                    f"-{cf.pesos(round(x['ahorro'])):>8} ({x['pct']:.0%})  {x['nombre'][:38]} → {x['alt_nombre']}"
+                    f"  {cf.precio_base(x['alt_por_base'], x['base'])}{promo}",
+                    curses.color_pair(3),
+                ))
+            total = sum(x["ahorro"] for x in self.sugerencias)
+            return (f"Ahorro en «{self.lista}»", cuerpo or [("No encontré nada más barato. 👌", curses.A_DIM)],
+                    f"Ahorro posible: ~{cf.pesos(round(total))}" if cuerpo else "")
 
         # Pedidos
         if self.detalle:
@@ -223,7 +244,7 @@ class App:
             self.sel[t] = min(self.sel[t] + 10, max(0, len(filas) - 1))
         elif c == "KEY_PPAGE":
             self.sel[t] = max(self.sel[t] - 10, 0)
-        elif c in "1234" and len(c) == 1:
+        elif c in "12345" and len(c) == 1:
             self.ir(int(c) - 1)
         elif c == "\t":
             self.ir((self.tab + 1) % len(PESTANAS))
@@ -348,6 +369,21 @@ class App:
                 cf.copiar_pedido_a_lista(items, nombre)
                 self.lista = nombre
                 self.msg = f"{len(items)} productos del pedido {pedido} copiados a «{nombre}»."
+
+    def tecla_ahorro(self, c):
+        r = self.actual()
+        if c == "r":
+            def avance(n, total, nombre):
+                self.msg = f"Revisando {n}/{total}: {nombre}"
+                self.dibujar()
+            self.sugerencias = self.intentar(cf.ahorro, self.lista, 0.05, avance, espera="Buscando alternativas…")
+            self.sel["Ahorro"] = 0
+        elif c in ("\n", "\r", "KEY_ENTER") and r:
+            cf.cambiar_en_lista(self.lista, r["sku"], r["alt_sku"], r["alt_cantidad"])
+            self.sugerencias.remove(r)
+            self.msg = f"Cambiado en «{self.lista}»: {r['alt_nombre']}"
+        elif c == "d" and r:
+            self.sugerencias.remove(r)
 
     def login(self):
         modo = self.preguntar("Login: [c]lave de Mi Carrefour o código por [e]mail? ")
